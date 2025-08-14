@@ -7,21 +7,15 @@ import {
   TransactionField,
 } from "@envio-dev/hypersync-client";
 
-// Define Uniswap V3 event signatures
-const event_signatures = [
-  "PoolCreated(address,address,uint24,int24,address)",
-  "Burn(address,int24,int24,uint128,uint256,uint256)",
-  "Initialize(uint160,int24)",
-  "Mint(address,address,int24,int24,uint128,uint256,uint256)",
-  "Swap(address,address,int256,int256,uint160,uint128,int24)",
-];
+// Define ERC-20 Transfer event signature
+const event_signatures = ["Transfer(address,address,uint256)"];
 
 // Create topic0 hashes from event signatures
 const topic0_list = event_signatures.map((sig) => keccak256(toHex(sig)));
 
 // Initialize Hypersync client
 const client = HypersyncClient.new({
-  url: "http://eth.hypersync.xyz",
+  url: "http://polygon.hypersync.xyz",
 });
 
 // Define query for Uniswap V3 events
@@ -29,6 +23,8 @@ let query = {
   fromBlock: 0,
   logs: [
     {
+      // Filter by native USDC (Polygon PoS)
+      address: ["0x3c499c542cEF5E3811e1192cE70d8cC03d5c3359"],
       topics: [topic0_list],
     },
   ],
