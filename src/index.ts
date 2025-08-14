@@ -5,6 +5,9 @@ import {
   JoinMode,
   BlockField,
   TransactionField,
+  HexOutput,
+  DataType,
+  Decoder,
 } from "@envio-dev/hypersync-client";
 
 // Define ERC-20 Transfer event signature
@@ -53,9 +56,15 @@ let query = {
 };
 
 const main = async () => {
-  console.log("Starting Uniswap V3 event scan...");
+  console.log("Starting ERC-20 Transfer event scan...");
+
+  // Create decoder outside the loop for better performance
+  const decoder = Decoder.fromSignatures([
+    "Transfer(address indexed from, address indexed to, uint256 value)",
+  ]);
 
   let totalEvents = 0;
+  let totalValue = BigInt(0);
   const startTime = performance.now();
 
   // Start streaming events
@@ -70,9 +79,42 @@ const main = async () => {
       break;
     }
 
-    // Count total events
+    // Count total events and decode
     if (res.data && res.data.logs) {
       totalEvents += res.data.logs.length;
+
+      // Decode logs
+      const decodedLogs = await decoder.decodeLogs(res.data.logs);
+
+      // Track if we've printed an event for this batch
+      let printedEventThisBatch = false;
+
+      // Process Transfer events
+      for (const decoded of decodedLogs) {
+        if (!decoded) continue;
+        try {
+          const from = decoded.indexed[0]?.val?.toString() || "unknown";
+          const to = decoded.indexed[1]?.val?.toString() || "unknown";
+          const value = (decoded.body[0]?.val as bigint) ?? BigInt(0);
+
+          totalValue += value;
+
+          if (!printedEventThisBatch) {
+            console.log(
+              "\nSample Transfer Event from Block " + res.nextBlock + ":"
+            );
+            console.log(`  From: ${from}`);
+            console.log(`  To: ${to}`);
+            console.log(`  Value: ${value.toString()}`);
+            printedEventThisBatch = true;
+          }
+        } catch (error: any) {
+          console.log(
+            "Error processing transfer event:",
+            error?.message ?? error
+          );
+        }
+      }
     }
 
     // Update query for next batch
@@ -95,6 +137,7 @@ const main = async () => {
   console.log(
     `\nScan complete: ${totalEvents} events in ${totalTime.toFixed(1)} seconds`
   );
+  console.log(`Total Value (sum of transfers): ${totalValue.toString()}`);
 };
 
 main().catch((error) => {
