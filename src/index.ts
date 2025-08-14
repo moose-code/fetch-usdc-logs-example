@@ -21,7 +21,7 @@ const client = HypersyncClient.new({
   url: "http://polygon.hypersync.xyz",
 });
 
-// Define query for Uniswap V3 events
+// Define query for ERC-20 Transfer events
 let query = {
   fromBlock: 0,
   logs: [
