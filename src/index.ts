@@ -19,6 +19,9 @@ let query = {
   fromBlock: 0,
   toBlock: 200000,
   transactions: [{}],
+  logs: [{}],
+  traces: [{}],
+  blocks: [{}],
   fieldSelection: {
     block: [BlockField.Number, BlockField.Timestamp, BlockField.Hash],
     log: [
